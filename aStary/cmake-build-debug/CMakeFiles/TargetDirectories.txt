@@ -1,0 +1,3 @@
+D:/Robotyka/aStary/cmake-build-debug/CMakeFiles/aStary.dir
+D:/Robotyka/aStary/cmake-build-debug/CMakeFiles/edit_cache.dir
+D:/Robotyka/aStary/cmake-build-debug/CMakeFiles/rebuild_cache.dir
