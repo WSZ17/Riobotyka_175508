@@ -1,0 +1,188 @@
+#include <iostream>
+#include <cmath>
+//Później na usuwanie -> #include <bits/stdc++.h>
+
+using namespace std;
+
+//Koszt kroku = 1, kolejność sprawdzania: góra, dół, lewo, prawo
+const int row = 5;
+const int col = 5;
+
+//0 - wolne, 5 - ściana
+//tutaj będzie szło od górnego lewego do dolnego prawego rogu
+
+//Trzeba przekręcić wokół osi y
+int grid[row][col]={
+    {0, 0, 5, 0, 0},
+    {5, 0, 0, 0, 5},
+    {0, 0, 5, 0, 0},
+    {5, 0, 0, 0, 0},
+    {0, 0, 0, 5, 0}
+    /*{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 5, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 5, 5},
+    {0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 0, 5, 5, 5, 5, 5, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 5, 5, 5, 5, 5, 5, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0}*/
+};
+
+//horizontally flipped 2D array
+int i,grid_rev[row][col];
+
+for(i = 0;i<row;i++)
+{
+   grid_rev[row-1-i] = grid[i];
+}
+
+//lista kierunków: góra, dół, lewo, prawo
+int kierunki[4][2] = {
+    {0,-1},
+    {0,1},
+    {-1,0},
+    {1,0}
+};
+
+struct Kratka {
+    int x;
+    int y;
+    int rodzicX;
+    int rodzicY;
+    double g, h, f;
+};
+
+Kratka start;
+Kratka koniec;
+Kratka aktualna;
+
+//Tablica do której dodawane będą odwiedzone kratki
+Kratka lista_closed[row*col];
+//Tablics do której dodawane będą kratki rozważane jako kolejne pola
+Kratka lista_open[row*col];
+
+double euklides(int x, int y, int i, int j) {
+    return sqrt(pow(i - x, 2) + pow(j - y, 2));
+}
+
+bool czyDopuszczalnePole(int x, int y) {
+    return (x >= 0 && x < row) && (y >= 0 && y < col) && (grid[y][x] != 5);
+}
+
+void aGwiazdeczka() {
+    //liczniki ilości elementów w liście zamkniętej i liście otwartej
+    int openCount=0, closedCount=0;
+
+    //g jest równe 0, ponieważ start to pierwsza, "domyślna" kratka więc nie ma tam kosztu
+    start.g = 0;
+    start.h = euklides(start.x,start.y,koniec.x,koniec.y);
+    start.f = start.g + start.h;
+    //start nie ma rodzica więc zapisuje ujemne wartości
+    start.rodzicX = -1; start.rodzicY = -1;
+    //daje na pierszym miejscu w liście (index 1, nie 0, żeby lepiej zapamiętywał pozycję)
+    lista_open[openCount++] = start;
+
+    //wartość booleanowa, która kontroluje, czy znaleziono drogę
+    bool znaleziono=false;
+
+    while(openCount>0) {
+        // wybierz kratkę o najmniejszym f
+        int index=0;
+        for(int i=1;i<openCount;i++)
+            if(lista_open[i].f < lista_open[index].f)
+                index=i;
+                aktualna=lista_open[index];
+
+        // usuń z otwartej
+        lista_open[index] = lista_open[--openCount];
+        lista_closed[closedCount++] = aktualna;
+
+        if(aktualna.x==koniec.x && aktualna.y==koniec.y) {
+            znaleziono=true;
+            break;
+        }
+
+        // sprawdź sąsiadów
+        for(int k=0;k<4;k++) {
+            int nx=aktualna.x+kierunki[k][0];
+            int ny=aktualna.y+kierunki[k][1];
+            if(!czyDopuszczalnePole(nx,ny)) continue;
+
+            bool wZamknietej=false;
+            for(int i=0;i<closedCount;i++)
+                if(lista_closed[i].x==nx && lista_closed[i].y==ny) {wZamknietej=true;break;}
+            if(wZamknietej) continue;
+
+            Kratka s;
+            s.x=nx; s.y=ny;
+            s.g=aktualna.g+1;
+            s.h=euklides(nx,ny,koniec.x,koniec.y);
+            s.f=s.g+s.h;
+            s.rodzicX=aktualna.x;
+            s.rodzicY=aktualna.y;
+
+            bool wOtwartej=false;
+            for(int i=0;i<openCount;i++)
+                if(lista_open[i].x==nx && lista_open[i].y==ny) {wOtwartej=true;break;}
+            if(!wOtwartej) lista_open[openCount++]=s;
+        }
+    }
+
+    if(znaleziono) {
+        cout<<"Sciezka:\n";
+        int path[row*col][2], pathLen=0;
+        while(!(aktualna.rodzicX==-1 && aktualna.rodzicY==-1)) {
+            path[pathLen][0]=aktualna.x;
+            path[pathLen][1]=aktualna.y;
+            pathLen++;
+            for(int i=0;i<closedCount;i++)
+                if(lista_closed[i].x==aktualna.rodzicX && lista_closed[i].y==aktualna.rodzicY) {
+                    aktualna=lista_closed[i]; break;
+                }
+        }
+        path[pathLen][0]=start.x;
+        path[pathLen][1]=start.y;
+        pathLen++;
+
+        for(int i=pathLen-1;i>=0;i--) {
+            cout<<"("<<path[i][0]<<","<<path[i][1]<<") ";
+        }
+        cout<<"\n";
+    } else cout<<"Brak sciezki!\n";
+}
+
+int main() {
+    /*cout << "Podaj punkt startowy";
+    cin >> start.x;
+    cin >> start.y;
+    cout << "Podaj punkt koncowy";
+    cin >> koniec.x;
+    cin >> koniec.y;*/
+
+    cout << "Array Elements: ";
+    for (int i = 0; i < n; i++)
+        cout << grid_rev[i] << " ";
+    cout << endl;
+
+    //sprawdzanie funkcji w trakcie pisania
+    /*
+    cout << czyDopuszczalnePole(start.x, start.y);
+    cout << euklides(start.x, start.y, koniec.x, koniec.y);
+    */
+
+    aGwiazdeczka();
+
+    return 0;
+}
