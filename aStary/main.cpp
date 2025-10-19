@@ -108,7 +108,7 @@ bool czyDopuszczalnePole(int x, int y) {
 }
 
 void aGwiazdeczka() {
-    //Liczniki które pokazują, ile obecniie elementów znajduje się na liście
+    //Liczniki które pokazują, ile obecnie elementów znajduje się na liście
     int openCount=0, closedCount=0;
 
     start.g = 0;
@@ -124,39 +124,33 @@ void aGwiazdeczka() {
         //wybieranie kratki o najmniejszym f (koszcie całkowitym ruchu) z listy otwartej
         //j - indeks najlepszej kratki (najmniejsze f)
         int j=0;
-        for(int i=1;i<openCount;i++)
+        for(int i=1; i<openCount; i++)
             if(lista_open[i].f < lista_open[j].f) j=i;
         aktualna=lista_open[j];
         //tutaj z racji braku innych elementów wpierw jako element aktualny jest ustawiana kratka startowa
         //i jest równe 1, ponieważ pierwszy element listy (element 0) jest już ustawiony jako start
 
+
         //usuwanie z listy otwartej
         lista_open[j] = lista_open[--openCount];
         lista_closed[closedCount++] = aktualna;
 
-        //warunek kończący funkcję - sprawdza, czy aktualna kratka jest kratką celową
-        if(aktualna.x==koniec.x && aktualna.y==koniec.y) {
-            znaleziono=true;
-            break;
-        }
-
         //sprawdzanie sąsiadów obecnej kratki
-        for(int k=0;k<4;k++) {
+        for(int k=0; k<4; k++) {
             int sx=aktualna.x+kierunki[k][0];
             int sy=aktualna.y+kierunki[k][1];
-            //nx i ny to współrzędne sąsiada
+            //sx i sy to współrzędne sąsiada
             if(!czyDopuszczalnePole(sx,sy))
                 continue;
             //^ tutaj sprawdzane jest, czy sąsiad nie wychodzi poza grid oraz nie jest ścianą (5), sprawdzając po kolei górę, dół, lewo i prawo
 
             bool wZamknietej=false;
-            //Przechodzi przez listę zamnkiętą i sprawdza, czy sąsiad już się tam znalazł, jeżeli nie, to funkcja kontynuuje działanie...
-            for(int i=0;i<closedCount;i++)
+            //Przechodzi przez listę zamkniętą i sprawdza, czy sąsiad już się tam znalazł, jeżeli się znalazł funkcja pomija go i przechodzi do następnego sąsiada
+            for(int i=0; i<closedCount; i++)
                 if(lista_closed[i].x==sx && lista_closed[i].y==sy) {wZamknietej=true;break;}
             if(wZamknietej)
                 continue;
 
-            //...i zapisuje jego wartości w kratce sąsiad
             sasiad.x=sx; sasiad.y=sy;
             sasiad.g=aktualna.g+1;
             sasiad.h=euklides(sx,sy,koniec.x,koniec.y);
@@ -164,41 +158,49 @@ void aGwiazdeczka() {
             sasiad.rodzicX=aktualna.x;
             sasiad.rodzicY=aktualna.y;
 
-            //sprawdzanie, czy sąsiad jest w liście otwartej
+            //sprawdzanie, czy sąsiad jest w liście otwartej, jeżeli jest, to nie dodajemy go ponownie
             bool wOtwartej=false;
-            for(int i=0;i<openCount;i++)
+            for(int i=0; i<openCount; i++)
                 if(lista_open[i].x==sx && lista_open[i].y==sy) {
                     wOtwartej=true;
                     break;
                 }
 
-            //jeżeli nie jest w otwartej to dodaje go do listy otwwartej
+            //jeżeli nie jest w otwartej to dodaje go do listy otwartej
             if(!wOtwartej)
                 lista_open[openCount++]=sasiad;
+        }
+
+        //warunek kończący funkcję - sprawdza, czy aktualna kratka jest kratką celową
+        if(aktualna.x==koniec.x && aktualna.y==koniec.y) {
+            znaleziono=true;
+            break;
         }
     }
 
     if(znaleziono) {
+
         cout<<"Sciezka:\n";
         //tutaj mamy while'a, który sprawdza, czy aktualna kratka nie jest kratką startową (bo kratka startowa ma rodziców jako -1) i dopóki nie jest kratką startową to wykonuje dalej pętle, dodając po kolei elementy, cofając się po rodzicach
         while(!(aktualna.rodzicX==-1 && aktualna.rodzicY==-1)) {
             sciezka[sciezkaLen][0]=aktualna.x;
             sciezka[sciezkaLen][1]=aktualna.y;
             sciezkaLen++;
-            for(int i=0;i<closedCount;i++)
+            for(int i=0; i<closedCount; i++)
                 //tutaj sprawdza i zamienia elementy - jeżeli jakiś element listy zamkniętej jest rodzicem kratki aktualnej, to zamieniamy element aktualny na tego rodzica i ponawiamy proces
                 if(lista_closed[i].x==aktualna.rodzicX && lista_closed[i].y==aktualna.rodzicY) {
                     aktualna=lista_closed[i]; break;
                 }
         }
+
         //pętla kończy się w momencie, w którym dotrzemy do startu, więc teraz dodajemy również i element startowy
         sciezka[sciezkaLen][0]=start.x;
         sciezka[sciezkaLen][1]=start.y;
         sciezkaLen++;
 
         //zamiana wierszy, żeby było od kratki startowej, do kratki końcowej
-        for (int i = 0; i < sciezkaLen / 2; i++) {
-            for (int j = 0; j < 2; j++) {
+        for (int i=0; i<sciezkaLen/2; i++) {
+            for (int j=0; j<2; j++) {
                 swap(sciezka[i][j], sciezka[sciezkaLen - 1 - i][j]);
             }
         }
