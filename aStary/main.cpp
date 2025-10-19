@@ -1,19 +1,74 @@
 #include <iostream>
 #include <cmath>
-//Później na usuwanie -> #include <bits/stdc++.h>
 
 using namespace std;
 
 //Koszt kroku = 1, kolejność sprawdzania: góra, dół, lewo, prawo
-const int row = 3;
-const int col = 3;
+const int row = 20;
+const int col = 20;
 
 //0 - wolne, 5 - ściana
+//Trzeba zreversować wokół osi y
 int grid[row][col]={
-    {0, 0, 5},
-    {5, 0, 0},
-    {5, 0, 0}
+    /*{0, 0, 5, 0, 0},
+    {5, 0, 0, 0, 5},
+    {0, 0, 5, 0, 0},
+    {5, 0, 0, 0, 0},
+    {0, 0, 0, 5, 0}*/
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 5, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 5, 5},
+    {0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 0, 5, 5, 5, 5, 5, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 5, 5, 5, 5, 5, 5, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0}
 };
+
+int grid_rev[row][col] {
+    {0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,5,0,0},
+    {0,0,0,0,0,0,0,0,0,5,0,0,5,5,5,5,5,5,0,0},
+    {0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0},
+    {0,5,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,5,5,5,5,5,5,5,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,5,5,5,5,5,5,5,5,5,5,0,5,5,5,5,5,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,5,5,5,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,5,5},
+    {0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,5,0},
+    {0,0,0,0,0,0,0,0,0,0,0,5,5,5,5,5,5,0,0,0}
+};
+
+void printArray(int arr[row][col]) {
+    for(int i=0; i<row; i++) {
+        for(int j=0; j<col; j++) {
+            cout << arr[i][j] << " ";
+        }
+        cout << "\n";
+    }
+    cout << "----\n";
+}
 
 //lista kierunków: góra, dół, lewo, prawo
 int kierunki[4][2] = {
@@ -33,130 +88,148 @@ struct Kratka {
 
 Kratka start;
 Kratka koniec;
+Kratka aktualna;
+Kratka sasiad;
 
-//Tablica do której dodawane będą odwiedzone kratki
+//Tablica do której dodawane będą odwiedzone już kratki
 Kratka lista_closed[row*col];
-//Tablics do której dodawane będą kratki rozważane jako kolejne pola
+//Tablica do której dodawane będą rozważane następnie kratki, będą stąd usuwane jeżeli zostaną przeniesione do zamkniętej
 Kratka lista_open[row*col];
+
+int sciezka[row*col][2];
+int sciezkaLen=0;
 
 double euklides(int x, int y, int i, int j) {
     return sqrt(pow(i - x, 2) + pow(j - y, 2));
 }
 
 bool czyDopuszczalnePole(int x, int y) {
-    return (x >= 0 && x < row) && (y >= 0 && y < col) && (grid[y][x] != 5);
+    return (x >= 0 && x < row) && (y >= 0 && y < col) && (grid_rev[y][x] != 5);
 }
 
-/*void (nie wiem jak napisać typ returnowania więc na razie jest void) aGwiazdeczka() {
-
-    //pozycja startowa - będzie się zmieniać z każdym kolejnym polem
-    int dx = start.x;
-    int dy = start.y;
-
-    Kratka aktualna;
-
-    lista_closed[licznik_closed][0] = dx;
-    lista_closed[licznik_closed][1] = dy;
-    licznik_closed++;
-
-    //int obecna[2] = {dx, dy};
-    while (dx!= koniec.x && dy!=koniec.y) {
-        dx = start.x+1;
-        dy = start.y+1;
-    }
-
-}*/
-
 void aGwiazdeczka() {
+    //Liczniki które pokazują, ile obecniie elementów znajduje się na liście
     int openCount=0, closedCount=0;
 
     start.g = 0;
     start.h = euklides(start.x,start.y,koniec.x,koniec.y);
     start.f = start.g + start.h;
     start.rodzicX = -1; start.rodzicY = -1;
-    lista_open[openCount++] = start;
+    lista_open[0] = start;
+    openCount++;
 
     bool znaleziono=false;
-    Kratka aktualna;
 
     while(openCount>0) {
-        // wybierz kratkę o najmniejszym f
-        int idx=0;
+        //wybieranie kratki o najmniejszym f (koszcie całkowitym ruchu) z listy otwartej
+        //j - indeks najlepszej kratki (najmniejsze f)
+        int j=0;
         for(int i=1;i<openCount;i++)
-            if(lista_open[i].f < lista_open[idx].f) idx=i;
-        aktualna=lista_open[idx];
+            if(lista_open[i].f < lista_open[j].f) j=i;
+        aktualna=lista_open[j];
+        //tutaj z racji braku innych elementów wpierw jako element aktualny jest ustawiana kratka startowa
+        //i jest równe 1, ponieważ pierwszy element listy (element 0) jest już ustawiony jako start
 
-        // usuń z otwartej
-        lista_open[idx] = lista_open[--openCount];
+        //usuwanie z listy otwartej
+        lista_open[j] = lista_open[--openCount];
         lista_closed[closedCount++] = aktualna;
 
+        //warunek kończący funkcję - sprawdza, czy aktualna kratka jest kratką celową
         if(aktualna.x==koniec.x && aktualna.y==koniec.y) {
             znaleziono=true;
             break;
         }
 
-        // sprawdź sąsiadów
+        //sprawdzanie sąsiadów obecnej kratki
         for(int k=0;k<4;k++) {
-            int nx=aktualna.x+kierunki[k][0];
-            int ny=aktualna.y+kierunki[k][1];
-            if(!czyDopuszczalnePole(nx,ny)) continue;
+            int sx=aktualna.x+kierunki[k][0];
+            int sy=aktualna.y+kierunki[k][1];
+            //nx i ny to współrzędne sąsiada
+            if(!czyDopuszczalnePole(sx,sy))
+                continue;
+            //^ tutaj sprawdzane jest, czy sąsiad nie wychodzi poza grid oraz nie jest ścianą (5), sprawdzając po kolei górę, dół, lewo i prawo
 
             bool wZamknietej=false;
+            //Przechodzi przez listę zamnkiętą i sprawdza, czy sąsiad już się tam znalazł, jeżeli nie, to funkcja kontynuuje działanie...
             for(int i=0;i<closedCount;i++)
-                if(lista_closed[i].x==nx && lista_closed[i].y==ny) {wZamknietej=true;break;}
-            if(wZamknietej) continue;
+                if(lista_closed[i].x==sx && lista_closed[i].y==sy) {wZamknietej=true;break;}
+            if(wZamknietej)
+                continue;
 
-            Kratka s;
-            s.x=nx; s.y=ny;
-            s.g=aktualna.g+1;
-            s.h=euklides(nx,ny,koniec.x,koniec.y);
-            s.f=s.g+s.h;
-            s.rodzicX=aktualna.x;
-            s.rodzicY=aktualna.y;
+            //...i zapisuje jego wartości w kratce sąsiad
+            sasiad.x=sx; sasiad.y=sy;
+            sasiad.g=aktualna.g+1;
+            sasiad.h=euklides(sx,sy,koniec.x,koniec.y);
+            sasiad.f=sasiad.g+sasiad.h;
+            sasiad.rodzicX=aktualna.x;
+            sasiad.rodzicY=aktualna.y;
 
+            //sprawdzanie, czy sąsiad jest w liście otwartej
             bool wOtwartej=false;
             for(int i=0;i<openCount;i++)
-                if(lista_open[i].x==nx && lista_open[i].y==ny) {wOtwartej=true;break;}
-            if(!wOtwartej) lista_open[openCount++]=s;
+                if(lista_open[i].x==sx && lista_open[i].y==sy) {
+                    wOtwartej=true;
+                    break;
+                }
+
+            //jeżeli nie jest w otwartej to dodaje go do listy otwwartej
+            if(!wOtwartej)
+                lista_open[openCount++]=sasiad;
         }
     }
 
     if(znaleziono) {
         cout<<"Sciezka:\n";
-        int path[row*col][2], pathLen=0;
+        //tutaj mamy while'a, który sprawdza, czy aktualna kratka nie jest kratką startową (bo kratka startowa ma rodziców jako -1) i dopóki nie jest kratką startową to wykonuje dalej pętle, dodając po kolei elementy, cofając się po rodzicach
         while(!(aktualna.rodzicX==-1 && aktualna.rodzicY==-1)) {
-            path[pathLen][0]=aktualna.x;
-            path[pathLen][1]=aktualna.y;
-            pathLen++;
+            sciezka[sciezkaLen][0]=aktualna.x;
+            sciezka[sciezkaLen][1]=aktualna.y;
+            sciezkaLen++;
             for(int i=0;i<closedCount;i++)
+                //tutaj sprawdza i zamienia elementy - jeżeli jakiś element listy zamkniętej jest rodzicem kratki aktualnej, to zamieniamy element aktualny na tego rodzica i ponawiamy proces
                 if(lista_closed[i].x==aktualna.rodzicX && lista_closed[i].y==aktualna.rodzicY) {
                     aktualna=lista_closed[i]; break;
                 }
         }
-        path[pathLen][0]=start.x;
-        path[pathLen][1]=start.y;
-        pathLen++;
+        //pętla kończy się w momencie, w którym dotrzemy do startu, więc teraz dodajemy również i element startowy
+        sciezka[sciezkaLen][0]=start.x;
+        sciezka[sciezkaLen][1]=start.y;
+        sciezkaLen++;
 
-        for(int i=pathLen-1;i>=0;i--) {
-            cout<<"("<<path[i][0]<<","<<path[i][1]<<") ";
+        //zamiana wierszy, żeby było od kratki startowej, do kratki końcowej
+        for (int i = 0; i < sciezkaLen / 2; i++) {
+            for (int j = 0; j < 2; j++) {
+                swap(sciezka[i][j], sciezka[sciezkaLen - 1 - i][j]);
+            }
+        }
+
+        //drukowanie ścieżki
+        for (int i=0; i<sciezkaLen; i++) {
+            cout<<"("<<sciezka[i][0]<<","<<sciezka[i][1]<<") ";
         }
         cout<<"\n";
+
     } else cout<<"Brak sciezki!\n";
 }
 
 int main() {
     cout << "Podaj punkt startowy";
+    cout<<"\n";
     cin >> start.x;
     cin >> start.y;
     cout << "Podaj punkt koncowy";
     cin >> koniec.x;
     cin >> koniec.y;
+    cout<<"\n";
 
     //sprawdzanie funkcji w trakcie pisania
     /*
     cout << czyDopuszczalnePole(start.x, start.y);
     cout << euklides(start.x, start.y, koniec.x, koniec.y);
     */
+
+    //printArray(grid);
+    printArray(grid_rev);
 
     aGwiazdeczka();
 
