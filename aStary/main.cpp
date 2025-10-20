@@ -108,7 +108,7 @@ bool czyDopuszczalnePole(int x, int y) {
 }
 
 void aGwiazdeczka() {
-    //Liczniki które pokazują, ile obecnie elementów znajduje się na liście
+    //Liczniki które pokazują, ile obecnie elementów znajduje się na listach
     int openCount=0, closedCount=0;
 
     start.g = 0;
@@ -205,6 +205,12 @@ void aGwiazdeczka() {
             }
         }
 
+        for(int i=0; i<sciezkaLen; i++){
+            if(grid_rev[sciezka[i][1]][sciezka[i][0]] == 0){
+                grid_rev[sciezka[i][1]][sciezka[i][0]] = 1;
+            }
+        }
+
         //drukowanie ścieżki
         for (int i=0; i<sciezkaLen; i++) {
             cout<<"("<<sciezka[i][0]<<","<<sciezka[i][1]<<") ";
@@ -234,6 +240,8 @@ int main() {
     printArray(grid_rev);
 
     aGwiazdeczka();
+
+    printArray(grid_rev);
 
     return 0;
 }
