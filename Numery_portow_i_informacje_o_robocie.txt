@@ -1,0 +1,17 @@
+Numer robota: 
+Sensory do kostki sterującej (porty): [IN3 - sonar], IN2 - kompas, [IN1 - color]
+Serwomotory (porty): OUTB - prawy, OUTC - lewy
+
+Dwa programy - jeden trzyma się lini z zewnątrz (od prawej) i od środka (od lewej)
+
+Zebrać wartości z linii, dać odpowiednie warunki 
+
+if(taka i taka wartość (zobaczenie przeszkody))
+skręca
+
+sonar ma ignorować 255, zasięg do 100
+
+kolor 0 - brak światła,
+
+Nasycenie światła z czarnego paska: <10
+Nasycenie na jasnym: >10
