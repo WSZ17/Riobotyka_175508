@@ -25,8 +25,8 @@ int main()
 		cout<<"\nPoziom baterii = "<<NXT::BatteryLevel(&comm);
 		cout<<"\nDostepna pamiec flash = "<<NXT::GetAvailableFlash(&comm);
 		
-		int x=30;//szybkoœæ jazdy w przód i ty³
-		int xtemp=30;//potrzebna do sprawdzania czy predkosc sie zmienila
+		int x=20;//szybkoœæ jazdy w przód i ty³
+		int xtemp=20;//potrzebna do sprawdzania czy predkosc sie zmienila
 
 		int y=20;//szybkoœæ obrotu w lewo, prawo
 		int ytemp=20;//potrzebna do sprawdzania czy predkosc sie zmienila
@@ -57,6 +57,7 @@ int main()
 		cout<<"\n U - odczyt z sonaru"; 
 		cout<<"\n C - odczyt nasycenia koloru";
 		cout<<"\n H - Zatrzymanie silnikow";
+		cout<<"\n P - Jazda wewn¹trz";
 		cout<<"\nK - Koniec Programu";
 
 		do
@@ -144,15 +145,15 @@ int main()
 			}
        
 			//Przed uzyciem serwo sprawdzamy numer portu do którego jest podl¹czony,
-			if(decyzja=='K' || decyzja=='k')
+			if (decyzja == 'K' || decyzja == 'k')
 			{
-			NXT::Motor::Stop(&comm, OUT_B, 0);
-			NXT::Motor::Stop(&comm, OUT_C, 0);
-			NXT::Motor::Stop(&comm, OUT_A, 0);
-			NXT::Sensor::SetSonarOff(&comm, IN_3);			
-			NXT::Sensor::SetColorOff(&comm,IN_1);
+				NXT::Motor::Stop(&comm, OUT_B, 0);
+				NXT::Motor::Stop(&comm, OUT_C, 0);
+				NXT::Motor::Stop(&comm, OUT_A, 0);
+				NXT::Sensor::SetSonarOff(&comm, IN_3);
+				NXT::Sensor::SetColorOff(&comm, IN_1);
 
-			break;
+				break;
 			}
 			
 			//Przed uzyciem sprawdzamy numer portu do którego jest podl¹czony sensor, 
@@ -169,21 +170,45 @@ int main()
 				cout<<"\nNasycenie swaitla = "<<color;
 			}
 			
+			if (decyzja == 'P' || decyzja == 'p')
+			{
+				if (kbhit() == true)
+				{
+					decyzja = getch();
+					if (decyzja == 'L' || decyzja == 'l')
+					{
+						NXT::Motor::Stop(&comm, OUT_B, 0);
+						NXT::Motor::Stop(&comm, OUT_C, 0);
+						NXT::Motor::Stop(&comm, OUT_A, 0);
+						NXT::Sensor::SetSonarOff(&comm, IN_3);
+						NXT::Sensor::SetColorOff(&comm, IN_1);
+
+						break;
+					}
+					continue;
+				}
+
+				do {
+					color = NXT::Sensor::GetValue(&comm, IN_1);
+					Wait(50);
+					if (color >= 10)
+					{
+						NXT::Motor::SetForward(&comm, OUT_B, y);
+						NXT::Motor::SetForward(&comm, OUT_C, y);
+					}
+
+					else {
+						NXT::Motor::SetReverse(&comm, OUT_B, y);
+						NXT::Motor::SetForward(&comm, OUT_C, y);
+					}
+				} while (decyzja != 'l' && decyzja != 'L');
+
+				break;
+			}
+
 			continue;
 			}
 		}while(decyzja!='k' && decyzja!='K');
-
-		//tutaj zacz¹æ pisaæ program
-
-		/*do {
-		* color=NXT::Sensor::GetValue(&comm,IN_1);
-		} while ();*/
-
-		//to bêdzie potrzebne do wykrywanie przeszkód
-		/*do {
-		* NXT::Sensor::GetSonarValue(&comm, IN_3)
-		} while ();*/
-
 
 		NXT::StopProgram(&comm);
 		
