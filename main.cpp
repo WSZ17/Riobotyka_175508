@@ -42,6 +42,7 @@ int main()
 	    
 		//aktywacja sonaru,
 		NXT::Sensor::SetSonar(&comm, IN_3);
+		int sonar;
 
 		//pocz¹tek programu
 		NXT::StartProgram(&comm,"program1");
@@ -57,8 +58,10 @@ int main()
 		cout<<"\n U - odczyt z sonaru"; 
 		cout<<"\n C - odczyt nasycenia koloru";
 		cout<<"\n H - Zatrzymanie silnikow";
-		cout<<"\n P - Jazda wewn¹trz";
-		cout<<"\nK - Koniec Programu";
+		cout<<"\n P - Jazda wewnatrz";
+		cout<<"\n O - Jazda zewnatrz";
+		cout<<"\n Q - SUMO";
+		cout<<"\n K - Koniec Programu";
 
 		do
 		{
@@ -172,23 +175,20 @@ int main()
 			
 			if (decyzja == 'P' || decyzja == 'p')
 			{
-				if (kbhit() == true)
-				{
-					decyzja = getch();
-					if (decyzja == 'L' || decyzja == 'l')
-					{
-						NXT::Motor::Stop(&comm, OUT_B, 0);
-						NXT::Motor::Stop(&comm, OUT_C, 0);
-						NXT::Motor::Stop(&comm, OUT_A, 0);
-						NXT::Sensor::SetSonarOff(&comm, IN_3);
-						NXT::Sensor::SetColorOff(&comm, IN_1);
-
-						break;
-					}
-					continue;
-				}
 
 				do {
+					if (kbhit() == true)
+					{
+						decyzja = getch();
+						if (decyzja == 'L' || decyzja == 'l')
+						{
+							NXT::Motor::SetForward(&comm, OUT_B, 0);
+							NXT::Motor::SetForward(&comm, OUT_C, 0);
+							NXT::Motor::Stop(&comm, OUT_B, 0);
+							NXT::Motor::Stop(&comm, OUT_C, 0);
+						}
+						continue;
+					}
 					color = NXT::Sensor::GetValue(&comm, IN_1);
 					Wait(50);
 					if (color >= 10)
@@ -202,8 +202,73 @@ int main()
 						NXT::Motor::SetForward(&comm, OUT_C, y);
 					}
 				} while (decyzja != 'l' && decyzja != 'L');
+			}
 
-				break;
+			if (decyzja == 'O' || decyzja == 'o')
+			{
+
+				do {
+					if (kbhit() == true)
+					{
+						decyzja = getch();
+						if (decyzja == 'L' || decyzja == 'l')
+						{
+							NXT::Motor::SetForward(&comm, OUT_B, 0);
+							NXT::Motor::SetForward(&comm, OUT_C, 0);
+							NXT::Motor::Stop(&comm, OUT_B, 0);
+							NXT::Motor::Stop(&comm, OUT_C, 0);
+						}
+						continue;
+					}
+					color = NXT::Sensor::GetValue(&comm, IN_1);
+					Wait(50);
+					if (color <= 20)
+					{
+						NXT::Motor::SetForward(&comm, OUT_B, y);
+						NXT::Motor::SetForward(&comm, OUT_C, y);
+					}
+
+					else {
+						NXT::Motor::SetReverse(&comm, OUT_B, y);
+						NXT::Motor::SetForward(&comm, OUT_C, y);
+					}
+				} while (decyzja != 'l' && decyzja != 'K');
+			}
+			
+			if (decyzja == 'Q' || decyzja == 'q')
+			{
+				do {
+
+					if (kbhit() == true)
+					{
+						decyzja = getch();
+						if (decyzja == 'L' || decyzja == 'l')
+						{
+							NXT::Motor::SetForward(&comm, OUT_B, 0);
+							NXT::Motor::SetForward(&comm, OUT_C, 0);
+							NXT::Motor::Stop(&comm, OUT_B, 0);
+							NXT::Motor::Stop(&comm, OUT_C, 0);
+						}
+						continue;
+					}
+
+					color = NXT::Sensor::GetValue(&comm, IN_1);
+					Wait(50);
+					if (color < 10)
+					{
+						NXT::Motor::SetReverse(&comm, OUT_B, y);
+						NXT::Motor::SetForward(&comm, OUT_C, y);
+					}
+					else if (NXT::Sensor::GetSonarValue(&comm, IN_3) < 50) {
+						NXT::Motor::SetForward(&comm, OUT_B, y);
+						NXT::Motor::SetForward(&comm, OUT_C, y);
+					}
+					else {
+						NXT::Motor::SetReverse(&comm, OUT_B, y);
+						NXT::Motor::SetForward(&comm, OUT_C, y);
+					}
+
+				} while (decyzja != 'l' && decyzja != 'L');
 			}
 
 			continue;
