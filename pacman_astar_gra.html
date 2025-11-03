@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Pac-Man z wolniejszymi duchami (A*)</title>
+<style>
+  body {
+    background: radial-gradient(circle at center, #000010, #000);
+    color: white;
+    text-align: center;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    overflow: hidden;
+  }
+  h1 {
+    margin-top: 10px;
+    color: #ffeb3b;
+    text-shadow: 0 0 10px #ff0;
+  }
+  #stats {
+    margin-top: 5px;
+    font-size: 18px;
+  }
+  canvas {
+    background: black;
+    margin-top: 10px;
+    border: 4px solid #333;
+    box-shadow: 0 0 20px #00f;
+  }
+</style>
+</head>
+<body>
+<h1>Pac-Man 🟡 z wolniejszymi duchami</h1>
+<div id="stats">❤️ Życia: <span id="lives">3</span> | 🍒 Punkty: <span id="score">0</span></div>
+<canvas id="game" width="600" height="600"></canvas>
+
+<script>
+// ===================== KONFIGURACJA =====================
+const rows = 20, cols = 20;
+const size = 30;
+const ctx = document.getElementById("game").getContext("2d");
+const grid = [
+ [0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,5,0,0],
+ [0,0,0,0,0,0,0,0,0,5,0,0,5,5,5,5,5,5,0,0],
+ [0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0],
+ [0,5,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,5,5,5,5,5,5,5,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+ [0,5,5,5,5,5,5,5,5,5,5,0,5,5,5,5,5,0,0,0],
+ [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,5,5,5,0],
+ [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,5,5],
+ [0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0],
+ [0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,5,0],
+ [0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,5,0,0]
+];
+
+let pacman = {x: 1, y: 1, dir: {x:0,y:0}};
+let ghosts = [
+  {x: 18, y: 18, color: "red"},
+  {x: 18, y: 1, color: "cyan"},
+  {x: 1, y: 18, color: "orange"}
+];
+let dots = [];
+let score = 0;
+let lives = 3;
+let gameOver = false;
+let tick = 0; // licznik klatek
+
+// Tworzenie kropek
+for (let y=0;y<rows;y++){
+  for (let x=0;x<cols;x++){
+    if (grid[y][x]===0) dots.push({x,y});
+  }
+}
+
+// ===================== ALGORYTM A* =====================
+function heuristic(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y);}
+function aStar(start,end){
+  const open=[start];
+  const closed=[];
+  const came={};
+  const g=Array.from({length:rows},()=>Array(cols).fill(Infinity));
+  const f=Array.from({length:rows},()=>Array(cols).fill(Infinity));
+  g[start.y][start.x]=0;
+  f[start.y][start.x]=heuristic(start,end);
+  const key=(x,y)=>`${x},${y}`;
+  while(open.length){
+    open.sort((a,b)=>f[a.y][a.x]-f[b.y][b.x]);
+    const cur=open.shift();
+    if(cur.x===end.x&&cur.y===end.y){
+      const path=[];
+      let c=key(cur.x,cur.y);
+      while(came[c]){
+        const [cx,cy]=c.split(',').map(Number);
+        path.unshift({x:cx,y:cy});
+        c=came[c];
+      }
+      return path;
+    }
+    closed.push(key(cur.x,cur.y));
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=cur.x+dx, ny=cur.y+dy;
+      if(nx<0||ny<0||nx>=cols||ny>=rows||grid[ny][nx]===5)continue;
+      if(closed.includes(key(nx,ny)))continue;
+      const tg=g[cur.y][cur.x]+1;
+      if(tg<g[ny][nx]){
+        came[key(nx,ny)]=key(cur.x,cur.y);
+        g[ny][nx]=tg;
+        f[ny][nx]=tg+heuristic({x:nx,y:ny},end);
+        if(!open.some(o=>o.x===nx&&o.y===ny))open.push({x:nx,y:ny});
+      }
+    }
+  }
+  return [];
+}
+
+// ===================== RYSOWANIE =====================
+function draw(){
+  ctx.clearRect(0,0,cols*size,rows*size);
+  // Ściany
+  for(let y=0;y<rows;y++){
+    for(let x=0;x<cols;x++){
+      if(grid[y][x]===5){
+        ctx.fillStyle="#2222ff";
+        ctx.fillRect(x*size,y*size,size,size);
+      }
+    }
+  }
+  // Kropki
+  ctx.fillStyle="white";
+  dots.forEach(d=>{
+    ctx.beginPath();
+    ctx.arc(d.x*size+size/2,d.y*size+size/2,3,0,Math.PI*2);
+    ctx.fill();
+  });
+  // Pac-Man
+  ctx.beginPath();
+  ctx.fillStyle="yellow";
+  ctx.arc(pacman.x*size+size/2,pacman.y*size+size/2,size/2.5,0.25*Math.PI,1.75*Math.PI);
+  ctx.lineTo(pacman.x*size+size/2,pacman.y*size+size/2);
+  ctx.fill();
+  // Duchy
+  ghosts.forEach(g=>{
+    ctx.fillStyle=g.color;
+    ctx.beginPath();
+    ctx.arc(g.x*size+size/2,g.y*size+size/2,size/2.5,0,Math.PI*2);
+    ctx.fill();
+  });
+}
+
+// ===================== RUCH =====================
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowUp")pacman.dir={x:0,y:-1};
+  if(e.key==="ArrowDown")pacman.dir={x:0,y:1};
+  if(e.key==="ArrowLeft")pacman.dir={x:-1,y:0};
+  if(e.key==="ArrowRight")pacman.dir={x:1,y:0};
+});
+
+function movePacman(){
+  const nx=pacman.x+pacman.dir.x;
+  const ny=pacman.y+pacman.dir.y;
+  if(nx>=0&&ny>=0&&nx<cols&&ny<rows&&grid[ny][nx]!==5){
+    pacman.x=nx; pacman.y=ny;
+    // Jedzenie kropek
+    dots = dots.filter(d=>{
+      if(d.x===pacman.x && d.y===pacman.y){
+        score+=10;
+        document.getElementById("score").textContent=score;
+        return false;
+      }
+      return true;
+    });
+  }
+}
+
+function moveGhosts(){
+  ghosts.forEach(g=>{
+    const path=aStar(g,pacman);
+    if(path.length>1){g.x=path[1].x; g.y=path[1].y;}
+    if(g.x===pacman.x && g.y===pacman.y){
+      lives--;
+      document.getElementById("lives").textContent=lives;
+      if(lives<=0){
+        gameOver=true;
+        alert("💀 Złapały cię duchy! Koniec gry!");
+      } else {
+        pacman={x:1,y:1,dir:{x:0,y:0}};
+      }
+    }
+  });
+}
+
+// ===================== GŁÓWNA PĘTLA =====================
+function loop(){
+  if(gameOver)return;
+  tick++;
+
+  movePacman();
+
+  // Duchy poruszają się tylko co 3 turę
+  if (tick % 3 === 0) {
+    moveGhosts();
+  }
+
+  draw();
+
+  if(dots.length===0){
+    alert("🎉 Wygrałeś! Wszystkie punkty zebrane!");
+    gameOver=true;
+  }
+}
+
+setInterval(loop,250);
+draw();
+</script>
+</body>
+</html>
+
